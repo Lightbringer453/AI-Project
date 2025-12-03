@@ -1,0 +1,29 @@
+# Core dependencies
+torch>=2.0.0
+torchvision>=0.15.0
+opencv-python>=4.8.0
+numpy>=1.24.0
+Pillow>=10.0.0
+
+# YOLOv8
+ultralytics>=8.0.0
+
+# DeepFace for human analysis
+deepface>=0.0.79
+tensorflow>=2.13.0
+tf-keras>=2.20.0  # Required for TensorFlow 2.20+
+
+# Detectron2 (optional - install separately if needed)
+# detectron2 @ git+https://github.com/facebookresearch/detectron2.git
+
+# UI
+streamlit>=1.28.0
+
+# Jupyter
+jupyter>=1.0.0
+matplotlib>=3.7.0
+ipykernel>=6.25.0
+
+# Utilities
+pathlib2>=2.3.7; python_version < '3.4'
+
