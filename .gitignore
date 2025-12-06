@@ -46,6 +46,18 @@ ENV/
 models/weights/
 *.weights
 
+# Datasets (too large for GitHub)
+animal_dataset/
+cat_breeds_dataset/
+cat_breeds_merged/
+oxford_pets_raw/
+oxford_pets_organized/
+
+# Compressed dataset files
+*.tar.gz
+*.zip
+*.rar
+
 # Outputs
 outputs/
 *.jpg

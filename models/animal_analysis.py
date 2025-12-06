@@ -1,5 +1,10 @@
 """
 Animal attribute analysis (species, breed, maturity)
+
+Terminology:
+- Species (Tür): Dog, Cat, Horse, Elephant, etc. (Ana hayvan türü)
+- Breed (Irk/Cins): Persian, Siamese, Golden Retriever, etc. (Türün alt kategorisi)
+- Maturity (Olgunluk): Adult or Juvenile
 """
 
 import cv2
@@ -24,7 +29,14 @@ class AnimalAnalyzer:
         # For now, we use rule-based heuristics
         self.species_breed_mapping = {
             "dog": ["Golden Retriever", "Labrador", "German Shepherd", "Bulldog", "Poodle", "Mixed"],
-            "cat": ["Persian", "Siamese", "Maine Coon", "British Shorthair", "Mixed"],
+            "cat": [
+                "Persian", "Siamese", "Maine Coon", "British Shorthair",
+                "Ragdoll", "Bengal", "Sphynx", "Scottish Fold", 
+                "Russian Blue", "Abyssinian", "Birman", "Norwegian Forest",
+                "Oriental", "Turkish Angora", "American Shorthair", "Exotic Shorthair",
+                "Devon Rex", "Burmese", "Manx", "Himalayan",
+                "Mixed"
+            ],
             "bird": ["Parrot", "Canary", "Finch", "Cockatiel", "Unknown"],
             "horse": ["Thoroughbred", "Arabian", "Quarter Horse", "Unknown"],
             "cow": ["Holstein", "Angus", "Hereford", "Unknown"],
@@ -44,8 +56,14 @@ class AnimalAnalyzer:
         self.dataset_loaded = False
         self.breed_vectors_path = Path("models/breed_vectors.pkl")
         
-        # Try to load pre-computed breed vectors
+        # Species recognition vectors (for better species detection)
+        self.species_reference_vectors = {}  # {species_name: feature_vector}
+        self.species_vectors_path = Path("models/species_vectors.pkl")
+        self.species_loaded = False
+        
+        # Try to load pre-computed vectors
         self._load_breed_vectors()
+        self._load_species_vectors()
     
     def _init_feature_extractor(self):
         """Initialize pre-trained ResNet for feature extraction."""
@@ -84,6 +102,22 @@ class AnimalAnalyzer:
                 self.dataset_loaded = False
         else:
             print("No pre-computed breed vectors found. Use build_breed_vectors_from_dataset() to create them.")
+    
+    def _load_species_vectors(self):
+        """Load pre-computed species feature vectors from file."""
+        if self.species_vectors_path.exists():
+            try:
+                with open(self.species_vectors_path, 'rb') as f:
+                    self.species_reference_vectors = pickle.load(f)
+                self.species_loaded = True
+                species_list = ', '.join(sorted(self.species_reference_vectors.keys()))
+                print(f"✓ Loaded species vectors: {species_list}")
+            except Exception as e:
+                print(f"Warning: Could not load species vectors: {e}")
+                self.species_reference_vectors = {}
+                self.species_loaded = False
+        else:
+            print("No species vectors found. Run train_species_classifier.py to create them.")
     
     def build_breed_vectors_from_dataset(
         self, 
@@ -233,15 +267,20 @@ class AnimalAnalyzer:
         
         Args:
             image_crop: Cropped image containing animal (BGR format)
-            species: Detected species name
+            species: Detected species name (e.g., "dog", "cat", "horse")
             detection_confidence: Confidence score from object detection
             
         Returns:
             Dictionary with keys:
-            - species: Animal species
-            - breed: Estimated breed (if possible)
+            - species: Animal SPECIES/TÜR (dog, cat, horse, etc.) - improved with dataset
+            - breed: Animal BREED/IRK/CİNS (Persian, Siamese, Golden Retriever, etc.)
             - maturity: 'juvenile' or 'adult'
-            - confidence: Confidence score
+            - confidence: Overall confidence score
+            
+        Example:
+            For a Persian cat:
+            - species: "cat" (Tür)
+            - breed: "Persian" (Irk/Cins)
         """
         if image_crop is None or image_crop.size == 0:
             return {
@@ -251,6 +290,18 @@ class AnimalAnalyzer:
                 "confidence": 0.0,
                 "error": "Empty image crop"
             }
+        
+        # Improve species detection using dataset if available
+        if self.species_loaded and self.feature_extractor is not None:
+            improved_species, species_confidence = self._improve_species_detection(image_crop, species)
+            # Lower threshold to 0.45 for better species correction
+            # This helps fix YOLO's mistakes (e.g., calling a cat a "bird")
+            if improved_species and species_confidence > 0.45:
+                print(f"  Species improved: {species} -> {improved_species} (confidence: {species_confidence:.2f})")
+                species = improved_species
+                # Update detection confidence with species confidence
+                if detection_confidence is not None:
+                    detection_confidence = (detection_confidence * 0.6 + species_confidence * 0.4)
         
         # Estimate maturity based on image features (improved heuristic)
         # In production, this would use a trained model
@@ -286,6 +337,59 @@ class AnimalAnalyzer:
         }
         
         return attributes
+    
+    def _improve_species_detection(self, image_crop: np.ndarray, current_species: str) -> tuple[str, float]:
+        """
+        Improve species detection using trained vectors.
+        
+        Args:
+            image_crop: Cropped image
+            current_species: Species detected by YOLO
+            
+        Returns:
+            Tuple of (improved_species, confidence)
+        """
+        if not self.species_loaded or len(self.species_reference_vectors) == 0:
+            return current_species, 0.5
+        
+        # Extract features
+        features = self._extract_deep_features(image_crop)
+        if features is None:
+            return current_species, 0.5
+        
+        # Calculate cosine similarity with all species
+        similarities = {}
+        for species_name, ref_vector in self.species_reference_vectors.items():
+            # Cosine similarity (already normalized vectors)
+            similarity = np.dot(features, ref_vector)
+            similarities[species_name] = similarity
+        
+        # Get best match
+        if not similarities:
+            return current_species, 0.5
+        
+        best_species = max(similarities.items(), key=lambda x: x[1])
+        species_name, similarity = best_species
+        
+        # Get top 3 matches for debugging
+        top_matches = sorted(similarities.items(), key=lambda x: x[1], reverse=True)[:3]
+        print(f"    Top species matches: {[(name, f'{sim:.3f}') for name, sim in top_matches]}")
+        
+        # Improved confidence calculation
+        # Cosine similarity ranges from -1 to 1, but with normalized vectors,
+        # positive values (0 to 1) indicate similarity
+        if similarity > 0.8:  # Very high similarity
+            confidence = 0.85 + (similarity - 0.8) * 0.75  # Maps [0.8,1.0] -> [0.85,1.0]
+        elif similarity > 0.6:  # High similarity
+            confidence = 0.65 + (similarity - 0.6) * 1.0  # Maps [0.6,0.8] -> [0.65,0.85]
+        elif similarity > 0.4:  # Medium similarity
+            confidence = 0.45 + (similarity - 0.4) * 1.0  # Maps [0.4,0.6] -> [0.45,0.65]
+        else:  # Low similarity
+            confidence = similarity * 1.125  # Maps [0,0.4] -> [0,0.45]
+        
+        confidence = min(0.98, max(0.2, confidence))
+        
+        return species_name, confidence
     
     def _estimate_maturity(self, image_crop: np.ndarray, species: str) -> Tuple[str, float]:
         """
@@ -1097,6 +1201,179 @@ class AnimalAnalyzer:
                     "max_texture": 35,  # Dense but short
                     "max_aspect_ratio": 0.95,  # Stocky
                     "color_brightness_range": (70, 180)
+                },
+                "Ragdoll": {
+                    "fur_type": "long",
+                    "typical_colors": ["cream", "seal", "blue"],
+                    "pattern": "pointed",
+                    "build": "large",
+                    "facial_type": "gentle",
+                    "min_texture": 35,
+                    "min_aspect_ratio": 0.95,
+                    "color_brightness_range": (100, 180)
+                },
+                "Bengal": {
+                    "fur_type": "short",
+                    "typical_colors": ["brown", "orange", "spotted"],
+                    "pattern": "spotted",
+                    "build": "muscular",
+                    "facial_type": "wild",
+                    "min_texture": 25,
+                    "max_texture": 40,
+                    "min_aspect_ratio": 1.0,
+                    "color_brightness_range": (80, 150)
+                },
+                "Sphynx": {
+                    "fur_type": "hairless",
+                    "typical_colors": ["pink", "gray", "black"],
+                    "pattern": "solid",
+                    "build": "slender",
+                    "facial_type": "distinctive",
+                    "max_texture": 20,
+                    "min_aspect_ratio": 1.05,
+                    "color_brightness_range": (100, 180)
+                },
+                "Scottish Fold": {
+                    "fur_type": "short",
+                    "typical_colors": ["any"],
+                    "pattern": "variable",
+                    "build": "medium",
+                    "facial_type": "round",
+                    "distinctive_features": ["folded_ears"],
+                    "min_texture": 20,
+                    "max_texture": 30,
+                    "color_brightness_range": (70, 180)
+                },
+                "Russian Blue": {
+                    "fur_type": "short",
+                    "typical_colors": ["blue", "gray"],
+                    "pattern": "solid",
+                    "build": "elegant",
+                    "facial_type": "refined",
+                    "min_texture": 20,
+                    "max_texture": 30,
+                    "min_aspect_ratio": 1.0,
+                    "color_brightness_range": (80, 140)
+                },
+                "Abyssinian": {
+                    "fur_type": "short",
+                    "typical_colors": ["ruddy", "red", "fawn"],
+                    "pattern": "ticked",
+                    "build": "slender",
+                    "facial_type": "alert",
+                    "min_texture": 25,
+                    "max_texture": 35,
+                    "min_aspect_ratio": 1.05,
+                    "color_brightness_range": (100, 160)
+                },
+                "Birman": {
+                    "fur_type": "long",
+                    "typical_colors": ["cream", "seal"],
+                    "pattern": "pointed",
+                    "build": "medium",
+                    "facial_type": "gentle",
+                    "distinctive_features": ["white_paws", "pointed_pattern"],
+                    "min_texture": 35,
+                    "color_brightness_range": (100, 170)
+                },
+                "Norwegian Forest": {
+                    "fur_type": "long",
+                    "typical_colors": ["any"],
+                    "pattern": "variable",
+                    "build": "large",
+                    "facial_type": "triangular",
+                    "min_texture": 40,
+                    "min_aspect_ratio": 1.0,
+                    "color_brightness_range": (70, 160)
+                },
+                "Oriental": {
+                    "fur_type": "short",
+                    "typical_colors": ["any"],
+                    "pattern": "solid",
+                    "build": "slender",
+                    "facial_type": "wedge",
+                    "distinctive_features": ["large_ears", "slender_body"],
+                    "min_texture": 15,
+                    "max_texture": 25,
+                    "min_aspect_ratio": 1.1,
+                    "color_brightness_range": (80, 180)
+                },
+                "Turkish Angora": {
+                    "fur_type": "long",
+                    "typical_colors": ["white"],
+                    "pattern": "solid",
+                    "build": "slender",
+                    "facial_type": "refined",
+                    "min_texture": 35,
+                    "min_aspect_ratio": 1.05,
+                    "color_brightness_range": (140, 200)
+                },
+                "American Shorthair": {
+                    "fur_type": "short",
+                    "typical_colors": ["any"],
+                    "pattern": "variable",
+                    "build": "medium",
+                    "facial_type": "round",
+                    "min_texture": 20,
+                    "max_texture": 30,
+                    "color_brightness_range": (70, 170)
+                },
+                "Exotic Shorthair": {
+                    "fur_type": "short",
+                    "typical_colors": ["any"],
+                    "pattern": "variable",
+                    "build": "stocky",
+                    "facial_type": "flat",
+                    "distinctive_features": ["flat_face", "short_hair", "round_body"],
+                    "min_texture": 20,
+                    "max_texture": 30,
+                    "max_aspect_ratio": 0.95,
+                    "color_brightness_range": (80, 180)
+                },
+                "Devon Rex": {
+                    "fur_type": "curly",
+                    "typical_colors": ["any"],
+                    "pattern": "variable",
+                    "build": "slender",
+                    "facial_type": "pixie",
+                    "distinctive_features": ["curly_fur", "large_ears"],
+                    "min_texture": 25,
+                    "max_texture": 40,
+                    "min_aspect_ratio": 1.05,
+                    "color_brightness_range": (80, 170)
+                },
+                "Burmese": {
+                    "fur_type": "short",
+                    "typical_colors": ["brown", "chocolate", "blue"],
+                    "pattern": "solid",
+                    "build": "medium",
+                    "facial_type": "round",
+                    "min_texture": 20,
+                    "max_texture": 30,
+                    "color_brightness_range": (70, 140)
+                },
+                "Manx": {
+                    "fur_type": "short",
+                    "typical_colors": ["any"],
+                    "pattern": "variable",
+                    "build": "stocky",
+                    "facial_type": "round",
+                    "distinctive_features": ["no_tail", "round_body"],
+                    "min_texture": 20,
+                    "max_texture": 30,
+                    "max_aspect_ratio": 0.95,
+                    "color_brightness_range": (70, 170)
+                },
+                "Himalayan": {
+                    "fur_type": "long",
+                    "typical_colors": ["cream", "seal", "chocolate"],
+                    "pattern": "pointed",
+                    "build": "stocky",
+                    "facial_type": "flat",
+                    "distinctive_features": ["flat_face", "pointed_pattern", "long_hair"],
+                    "min_texture": 35,
+                    "max_aspect_ratio": 0.95,
+                    "color_brightness_range": (100, 180)
                 },
                 "Mixed": {
                     "fur_type": "variable",
