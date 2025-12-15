@@ -24,7 +24,6 @@ wheels/
 venv/
 env/
 ENV/
-.venv
 
 # IDE
 .vscode/
@@ -33,18 +32,13 @@ ENV/
 *.swo
 *~
 
-# Jupyter Notebook
-.ipynb_checkpoints
-
-# Model files
+# Model files (büyük dosyalar)
 *.pt
 *.pth
 *.pkl
 *.h5
 *.onnx
-*.pb
-models/weights/
-*.weights
+yolov8n.pt
 
 # Datasets (too large for GitHub)
 animal_dataset/
@@ -59,26 +53,23 @@ oxford_pets_organized/
 *.rar
 
 # Outputs
-outputs/
-*.jpg
-*.png
-*.jpeg
-!test_image.jpg  # Keep test images if needed
+outputs/*
+!outputs/.gitkeep
+
+# Dataset (eğer büyükse)
+datasets/
+*.zip
 
 # OS
 .DS_Store
 Thumbs.db
 
+# Jupyter
+.ipynb_checkpoints/
+
 # Logs
 *.log
-
-# DeepFace cache
-.deepface/
-
-# YOLO downloads
-yolov8*.pt
 
 # Temporary files
 *.tmp
 *.temp
-
