@@ -4,8 +4,6 @@ Configuration file for the Multi-Purpose Image Detection and Analysis System
 
 # Model paths and settings
 YOLO_MODEL_PATH = "yolov8n.pt"  # Will download automatically if not present
-DETECTRON2_CONFIG = "COCO-Detection/faster_rcnn_R_50_FPN_3x.yaml"
-DETECTRON2_WEIGHTS = "detectron2://COCO-Detection/faster_rcnn_R_50_FPN_3x/137849458/model_final_280758.pkl"
 
 # Detection settings
 CONFIDENCE_THRESHOLD = 0.5

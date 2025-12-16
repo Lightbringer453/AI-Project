@@ -196,14 +196,22 @@ class HumanAnalyzer:
             if emotion_scores:
                 dominant_emotion = self._refine_emotion(emotion_scores, dominant_emotion)
             
+            # Calculate individual confidences
+            gender_confidence = result.get("gender", {}).get(result.get("dominant_gender", ""), 0.0) if isinstance(result.get("gender"), dict) else 0.0
+            emotion_confidence = emotion_scores.get(dominant_emotion, 0.0) if emotion_scores else 0.0
+            
+            # Calculate overall confidence as average of available confidences
+            # Age doesn't have confidence, so we use gender and emotion
+            overall_confidence = (gender_confidence + emotion_confidence) / 2.0
+            
             attributes = {
                 "age": float(result.get("age", 0)),
                 "gender": result.get("dominant_gender", "Unknown"),
                 "emotion": dominant_emotion,
-                "confidence": 0.8,  # DeepFace doesn't provide overall confidence
-                "gender_confidence": result.get("gender", {}).get(result.get("dominant_gender", ""), 0.0) if isinstance(result.get("gender"), dict) else 0.0,
+                "confidence": round(overall_confidence / 100.0, 2),  # Normalize to 0-1 range
+                "gender_confidence": gender_confidence,
                 "emotion_scores": {k: float(v) for k, v in emotion_scores.items()} if emotion_scores else {},
-                "emotion_confidence": emotion_scores.get(dominant_emotion, 0.0) if emotion_scores else 0.0
+                "emotion_confidence": emotion_confidence
             }
             
             return attributes

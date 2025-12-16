@@ -30,7 +30,7 @@ class ImageAnalysisPipeline:
         Initialize the analysis pipeline.
         
         Args:
-            detector_type: 'yolo' or 'detectron2'
+            detector_type: 'yolo'
             yolo_model_path: Path to YOLOv8 model
             device: Device to run on ('cpu', 'cuda', etc.)
         """
@@ -40,9 +40,6 @@ class ImageAnalysisPipeline:
         # Initialize detector
         if self.detector_type == "yolo":
             self.detector = YOLODetector(model_path=yolo_model_path, device=device)
-        elif self.detector_type == "detectron2":
-            from models.detectron_detector import Detectron2Detector
-            self.detector = Detectron2Detector(device=device or "cpu")
         else:
             raise ValueError(f"Unknown detector type: {detector_type}")
         

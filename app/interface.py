@@ -20,7 +20,7 @@ def main():
     """Streamlit application main function."""
     st.set_page_config(
         page_title="Image Detection & Analysis",
-        page_icon="🔍",
+        page_icon="�️",
         layout="wide"
     )
 
@@ -86,7 +86,7 @@ def main():
         # Mark splash as shown
         st.session_state["splash_done"] = True
     
-    st.title("🔍 Multi-Purpose Image Detection and Analysis System")
+    st.title("Multi-Purpose Image Detection and Analysis System")
     st.markdown("""
     Upload an image to detect humans and animals, then analyze their attributes:
     - **Humans**: Age, Gender, Emotion
@@ -112,7 +112,7 @@ def main():
         col1, col2 = st.columns(2)
         
         with col1:
-            st.subheader("📷 Original Image")
+            st.subheader("Original Image")
             st.image(image, channels="BGR", use_container_width=True)
         
         # Process image
@@ -148,14 +148,14 @@ def main():
             
             # Display annotated image
             with col2:
-                st.subheader("🎯 Analysis Results")
+                st.subheader("Analysis Results")
                 if result["annotated_image"] is not None:
                     st.image(result["annotated_image"], channels="BGR", use_container_width=True)
                 else:
                     st.info("No detections found")
             
             # Display summary
-            st.subheader("📊 Summary")
+            st.subheader("Summary")
             summary = result["summary"]
             col_sum1, col_sum2, col_sum3 = st.columns(3)
             
@@ -168,10 +168,10 @@ def main():
             
             # Display detailed results
             if result["detections"]:
-                st.subheader("🔍 Detailed Results")
+                st.subheader("Detailed Results")
                 
                 for i, detection in enumerate(result["detections"], 1):
-                    with st.expander(f"Detection {i}: {detection['class_type'].title()}"):
+                    with st.expander(f"Detection {i}: {detection['class_type'].title()}", expanded=True):
                         col_det1, col_det2 = st.columns(2)
                         
                         with col_det1:
@@ -308,18 +308,16 @@ The Merino subsequently spread to many parts of the world, including South Afric
             st.exception(e)
     
     else:
-        st.info("👆 Please upload an image to get started")
+        st.info("Please upload an image to get started")
         
         # Show example usage
-        with st.expander("ℹ️ How to use"):
+        with st.expander("How to use", expanded=True):
             st.markdown("""
             1. **Upload an image** using the file uploader above
-            2. **Adjust settings** in the sidebar if needed
-            3. **View results** including:
+            2. **View results** including:
                - Annotated image with bounding boxes
                - Summary statistics
                - Detailed attributes for each detection
-            4. **Download JSON** output if needed
             
             **Supported formats**: JPG, JPEG, PNG, BMP
             """)
