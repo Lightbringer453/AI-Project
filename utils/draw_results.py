@@ -29,17 +29,13 @@ def draw_bounding_box(
     """
     x1, y1, x2, y2 = bbox
     
-    # Default color (blue)
     if color is None:
         color = (255, 0, 0)
     
-    # Draw rectangle
     cv2.rectangle(image, (x1, y1), (x2, y2), color, 2)
     
-    # Prepare label text
     label_text = f"{label}: {confidence:.2f}"
     
-    # Calculate text size
     font = cv2.FONT_HERSHEY_SIMPLEX
     font_scale = 0.6
     thickness = 2
@@ -47,7 +43,6 @@ def draw_bounding_box(
         label_text, font, font_scale, thickness
     )
     
-    # Draw label background
     cv2.rectangle(
         image,
         (x1, y1 - text_height - baseline - 10),
@@ -56,7 +51,6 @@ def draw_bounding_box(
         -1
     )
     
-    # Draw label text
     cv2.putText(
         image,
         label_text,
@@ -89,16 +83,14 @@ def draw_human_attributes(
         Annotated image
     """
     if color is None:
-        color = (0, 255, 0)  # Green for humans
+        color = (0, 255, 0)  
     
     x1, y1, x2, y2 = bbox
     
-    # Draw bounding box
     image = draw_bounding_box(
         image, bbox, "Human", attributes.get("confidence", 0.0), color
     )
     
-    # Prepare attribute text
     font = cv2.FONT_HERSHEY_SIMPLEX
     font_scale = 0.5
     thickness = 1
@@ -111,7 +103,6 @@ def draw_human_attributes(
     if "emotion" in attributes and attributes['emotion'] is not None:
         attributes_text.append(f"Emotion: {attributes['emotion']}")
     
-    # Draw attributes below bounding box
     y_offset = y2 + 20
     for i, attr_text in enumerate(attributes_text):
         cv2.putText(
@@ -146,17 +137,15 @@ def draw_animal_attributes(
         Annotated image
     """
     if color is None:
-        color = (0, 165, 255)  # Orange for animals
+        color = (0, 165, 255)  
     
     x1, y1, x2, y2 = bbox
     
-    # Draw bounding box
     species = attributes.get("species", "Animal")
     image = draw_bounding_box(
         image, bbox, species, attributes.get("confidence", 0.0), color
     )
     
-    # Prepare attribute text
     font = cv2.FONT_HERSHEY_SIMPLEX
     font_scale = 0.5
     thickness = 1
@@ -167,7 +156,6 @@ def draw_animal_attributes(
     if "maturity" in attributes and attributes["maturity"] is not None:
         attributes_text.append(f"Maturity: {attributes['maturity']}")
     
-    # Draw attributes below bounding box
     y_offset = y2 + 20
     for i, attr_text in enumerate(attributes_text):
         cv2.putText(
@@ -222,7 +210,6 @@ def draw_all_detections(
                     image, bbox, species, attributes.get("confidence", 0.0)
                 )
         else:
-            # Generic detection
             label = detection.get("label", "Unknown")
             confidence = detection.get("confidence", 0.0)
             image = draw_bounding_box(image, bbox, label, confidence)

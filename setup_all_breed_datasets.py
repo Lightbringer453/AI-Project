@@ -18,7 +18,6 @@ import os
 
 
 def run_command(command, description):
-    """Bir komutu çalıştır ve sonucu göster."""
     print("\n" + "=" * 70)
     print(description)
     print("=" * 70)
@@ -58,7 +57,6 @@ def main():
     success_count = 0
     total_steps = 0
     
-    # 1. Kedi breed dataset'i
     total_steps += 1
     if run_command(
         "python download_cat_breed_dataset.py --max_per_breed 200",
@@ -66,7 +64,6 @@ def main():
     ):
         success_count += 1
     
-    # 2. Köpek breed dataset'i (opsiyonel, başarısız olursa devam et)
     total_steps += 1
     if run_command(
         "python download_dog_breed_dataset.py --max_per_breed 200",
@@ -76,7 +73,6 @@ def main():
     else:
         print("\n⚠ Köpek dataset indirilemedi, manuel indirme gerekebilir")
     
-    # 3. Oxford Pets dataset'i
     total_steps += 1
     if run_command(
         "python download_oxford_pets.py",
@@ -84,7 +80,6 @@ def main():
     ):
         success_count += 1
     
-    # 4. Kedi breed classifier eğitimi
     cat_dataset_paths = [
         "cat_breeds_dataset",
         "oxford_pets_organized"
@@ -100,7 +95,6 @@ def main():
                 success_count += 1
             break
     
-    # 5. Köpek breed classifier eğitimi (eğer dataset varsa)
     dog_dataset_paths = [
         "dog_breeds_dataset",
         "oxford_pets_organized"
@@ -116,7 +110,6 @@ def main():
                 success_count += 1
             break
     
-    # Özet
     print("\n" + "=" * 70)
     print("ÖZET")
     print("=" * 70)

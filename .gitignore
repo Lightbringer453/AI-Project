@@ -73,3 +73,7 @@ Thumbs.db
 # Temporary files
 *.tmp
 *.temp
+
+# Build/Executable files
+*.exe
+*.spec

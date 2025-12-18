@@ -9,7 +9,7 @@ from PIL import Image
 import sys
 from pathlib import Path
 
-# Add parent directory to path to import modules
+
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from app.main import ImageAnalysisPipeline
@@ -24,7 +24,7 @@ def main():
         layout="wide"
     )
 
-    # One-time splash/loading screen in the center of the page
+    
     if "splash_done" not in st.session_state:
         st.markdown(
             """
@@ -83,7 +83,7 @@ def main():
             """,
             unsafe_allow_html=True,
         )
-        # Mark splash as shown
+        
         st.session_state["splash_done"] = True
     
     st.title("Multi-Purpose Image Detection and Analysis System")
@@ -93,10 +93,10 @@ def main():
     - **Animals**: Species, Breed, Maturity
     """)
     
-    # Detector type is fixed to YOLO
+   
     detector_type = "yolo"
     
-    # File uploader
+   
     uploaded_file = st.file_uploader(
         "Choose an image...",
         type=['jpg', 'jpeg', 'png', 'bmp'],
@@ -104,20 +104,22 @@ def main():
     )
     
     if uploaded_file is not None:
-        # Load image
+        
         image_bytes = uploaded_file.read()
         image = load_image_from_bytes(image_bytes)
         
-        # Display original image
+        
         col1, col2 = st.columns(2)
         
         with col1:
             st.subheader("Original Image")
             st.image(image, channels="BGR", use_container_width=True)
         
-        # Process image
-        # Create centered loading indicator
+        
         loading_placeholder = st.empty()
+        progress_bar = st.progress(0)
+        status_text = st.empty()
+        
         with loading_placeholder.container():
             st.markdown("""
             <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 300px;">
@@ -133,20 +135,26 @@ def main():
             """, unsafe_allow_html=True)
         
         try:
-            # Initialize pipeline
-            pipeline = ImageAnalysisPipeline(detector_type=detector_type)
+            status_text.text("Initializing pipeline...")
+            progress_bar.progress(10)
             
-            # Process image
+            pipeline = ImageAnalysisPipeline(detector_type=detector_type)
+            progress_bar.progress(30)
+            status_text.text("Detecting objects in image...")
+            
             result = pipeline.process_image(
                 image,
                 save_output=False,
                 draw_annotations=True
             )
             
-            # Clear loading indicator
-            loading_placeholder.empty()
+            progress_bar.progress(100)
+            status_text.text("Analysis complete!")
             
-            # Display annotated image
+            loading_placeholder.empty()
+            progress_bar.empty()
+            status_text.empty()
+            
             with col2:
                 st.subheader("Analysis Results")
                 if result["annotated_image"] is not None:
@@ -154,7 +162,6 @@ def main():
                 else:
                     st.info("No detections found")
             
-            # Display summary
             st.subheader("Summary")
             summary = result["summary"]
             col_sum1, col_sum2, col_sum3 = st.columns(3)
@@ -166,7 +173,6 @@ def main():
             with col_sum3:
                 st.metric("Animals", summary["animals"])
             
-            # Display detailed results
             if result["detections"]:
                 st.subheader("Detailed Results")
                 
@@ -302,15 +308,23 @@ The Merino subsequently spread to many parts of the world, including South Afric
                                 st.write(f"- Maturity: {attributes.get('maturity', 'N/A')}")
                 
         except Exception as e:
-            # Clear loading indicator on error
             loading_placeholder.empty()
+            progress_bar.empty()
+            status_text.empty()
             st.error(f"Error processing image: {str(e)}")
             st.exception(e)
+            
+            # DeepFace model indirme hatası olabilir
+            if "deepface" in str(e).lower() or "model" in str(e).lower():
+                st.info("""
+                **Not:** DeepFace modelleri ilk kullanımda otomatik olarak indirilir. 
+                Bu işlem birkaç dakika sürebilir ve internet bağlantısı gerektirir.
+                Lütfen tekrar deneyin veya internet bağlantınızı kontrol edin.
+                """)
     
     else:
         st.info("Please upload an image to get started")
-        
-        # Show example usage
+    
         with st.expander("How to use", expanded=True):
             st.markdown("""
             1. **Upload an image** using the file uploader above

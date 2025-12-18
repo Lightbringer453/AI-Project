@@ -55,23 +55,18 @@ class Detectron2Detector:
         try:
             cfg = get_cfg()
             
-            # Load config
             if self.config_path.startswith("COCO"):
-                # Use built-in COCO config
-                cfg.merge_from_file(None)  # Will use default COCO config
+                cfg.merge_from_file(None)  
             else:
                 cfg.merge_from_file(self.config_path)
             
-            # Set weights
             if self.weights_path.startswith("detectron2://"):
                 cfg.MODEL.WEIGHTS = self.weights_path
             else:
                 cfg.MODEL.WEIGHTS = self.weights_path
             
-            # Set device
             cfg.MODEL.DEVICE = self.device
             
-            # Set confidence threshold
             cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = CONFIDENCE_THRESHOLD
             
             self.predictor = DefaultPredictor(cfg)
@@ -93,7 +88,6 @@ class Detectron2Detector:
         if conf_threshold is None:
             conf_threshold = CONFIDENCE_THRESHOLD
         
-        # Run inference
         outputs = self.predictor(image)
         
         instances = outputs["instances"]
@@ -110,11 +104,9 @@ class Detectron2Detector:
             class_id = int(classes[i])
             confidence = float(scores[i])
             
-            # Get box coordinates
             box = boxes[i]
             x1, y1, x2, y2 = int(box[0]), int(box[1]), int(box[2]), int(box[3])
             
-            # Filter for humans and animals only
             if class_id == HUMAN_CLASS_ID:
                 detection = {
                     "bbox": (x1, y1, x2, y2),
@@ -139,13 +131,6 @@ class Detectron2Detector:
     def detect_and_crop(self, image: np.ndarray, conf_threshold: float = None) -> List[Dict]:
         """
         Detect objects and return cropped regions.
-        
-        Args:
-            image: Input image
-            conf_threshold: Confidence threshold
-            
-        Returns:
-            List of detection dictionaries with additional 'crop' key
         """
         detections = self.detect(image, conf_threshold)
         

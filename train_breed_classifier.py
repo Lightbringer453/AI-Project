@@ -20,7 +20,6 @@ import argparse
 from pathlib import Path
 import sys
 
-# Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent))
 
 from models.animal_analysis import AnimalAnalyzer
@@ -52,11 +51,9 @@ def main():
     
     args = parser.parse_args()
     
-    # Initialize analyzer
     print("Initializing AnimalAnalyzer...")
     analyzer = AnimalAnalyzer()
     
-    # Build breed vectors
     print(f"\nBuilding breed vectors for {args.species}...")
     print(f"Dataset path: {args.dataset_path}")
     print(f"Samples per breed: {args.samples_per_breed}\n")

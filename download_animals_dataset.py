@@ -27,10 +27,8 @@ def download_and_organize_dataset(output_dir="animal_dataset", max_images_per_cl
     print("ANIMALS-10 DATASET İNDİRME VE ORGANİZASYON")
     print("=" * 70)
     
-    # Dataset'i yükle
     print("\n1. Dataset yükleniyor (bu biraz zaman alabilir)...")
     try:
-        # Train split'i yükle (daha fazla veri için)
         dataset = load_dataset("dgrnd4/animals-10", split="train")
         print(f"   ✓ Dataset yüklendi: {len(dataset)} görsel")
     except Exception as e:
@@ -44,17 +42,14 @@ def download_and_organize_dataset(output_dir="animal_dataset", max_images_per_cl
             print(f"   ✗ Hata: {e2}")
             return False
     
-    # Output klasörünü oluştur
     output_path = Path(output_dir)
     output_path.mkdir(exist_ok=True, parents=True)
     
     print(f"\n2. Görseller '{output_dir}' klasörüne kaydediliyor...")
     
-    # Sınıf isimlerini al
     if hasattr(dataset.features["label"], "names"):
         class_names = dataset.features["label"].names
     else:
-        # Manuel olarak sınıf isimlerini belirle (animals-10 için)
         class_names = [
             "dog", "cat", "horse", "spider", "butterfly",
             "chicken", "sheep", "cow", "squirrel", "elephant"
@@ -62,44 +57,36 @@ def download_and_organize_dataset(output_dir="animal_dataset", max_images_per_cl
     
     print(f"   Sınıflar: {', '.join(class_names)}")
     
-    # Her sınıf için klasör oluştur
     for class_name in class_names:
         class_path = output_path / class_name
         class_path.mkdir(exist_ok=True)
     
-    # Görselleri organize et
+    
     class_counts = {name: 0 for name in class_names}
     
     print("\n3. Görseller işleniyor...")
     for idx, item in enumerate(tqdm(dataset, desc="   Progress")):
-        # Label'ı al
         label = item["label"]
         class_name = class_names[label]
         
-        # Maksimum sayıya ulaşıldıysa atla
         if class_counts[class_name] >= max_images_per_class:
             continue
         
-        # Görseli al
         image = item["image"]
         
-        # Görseli kaydet
         image_filename = f"{class_name}_{class_counts[class_name]:04d}.jpg"
         image_path = output_path / class_name / image_filename
         
         try:
-            # RGB'ye çevir (eğer grayscale ise)
             if image.mode != 'RGB':
                 image = image.convert('RGB')
             
-            # Kaydet
             image.save(image_path, 'JPEG', quality=95)
             class_counts[class_name] += 1
         except Exception as e:
             print(f"\n   ⚠ Görsel kaydedilemedi: {image_filename} - {e}")
             continue
     
-    # Sonuçları göster
     print("\n" + "=" * 70)
     print("SONUÇ")
     print("=" * 70)
@@ -122,7 +109,6 @@ def prepare_for_training(dataset_dir="animal_dataset"):
     """
     dataset_path = Path(dataset_dir)
     
-    # Evcil hayvanlar ve çiftlik hayvanları için alt klasörler oluştur
     categories = {
         "pets": ["dog", "cat"],
         "farm": ["horse", "sheep", "cow", "chicken"],
@@ -177,14 +163,12 @@ if __name__ == "__main__":
     
     print("\n🐾 Animals-10 Dataset İndirme Aracı\n")
     
-    # Dataset'i indir ve organize et
     success = download_and_organize_dataset(
         output_dir=args.output_dir,
         max_images_per_class=args.max_per_class
     )
     
     if success:
-        # Eğitim önerilerini göster
         prepare_for_training(args.output_dir)
         
         print("\n" + "=" * 70)

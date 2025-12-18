@@ -22,7 +22,6 @@ from PIL import Image
 import pickle
 from tqdm import tqdm
 
-# Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent))
 
 
@@ -34,14 +33,12 @@ class SpeciesFeatureExtractor:
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         print(f"Using device: {self.device}")
         
-        # Load pre-trained ResNet18
         print("Loading ResNet18 model...")
         model = models.resnet18(weights=models.ResNet18_Weights.DEFAULT)
         self.feature_extractor = nn.Sequential(*list(model.children())[:-1])
         self.feature_extractor.eval()
         self.feature_extractor.to(self.device)
         
-        # Image preprocessing
         self.transform = transforms.Compose([
             transforms.Resize((224, 224)),
             transforms.ToTensor(),
@@ -54,24 +51,19 @@ class SpeciesFeatureExtractor:
     def extract_features(self, image_path):
         """Extract deep features from image."""
         try:
-            # Load image
             img = cv2.imread(str(image_path))
             if img is None:
                 return None
             
-            # Convert BGR to RGB
             img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
             pil_image = Image.fromarray(img_rgb)
             
-            # Preprocess
             input_tensor = self.transform(pil_image).unsqueeze(0).to(self.device)
             
-            # Extract features
             with torch.no_grad():
                 features = self.feature_extractor(input_tensor)
                 features = features.squeeze().cpu().numpy()
                 features = features.flatten()
-                # Normalize
                 features = features / (np.linalg.norm(features) + 1e-8)
             
             return features
@@ -94,10 +86,8 @@ def build_species_vectors(dataset_path, samples_per_species=100, output_file="mo
         print(f"Error: Dataset path does not exist: {dataset_path}")
         return False
     
-    # Initialize feature extractor
     extractor = SpeciesFeatureExtractor()
     
-    # Get species directories
     species_dirs = [d for d in dataset_path.iterdir() if d.is_dir()]
     
     if len(species_dirs) == 0:
@@ -118,7 +108,6 @@ def build_species_vectors(dataset_path, samples_per_species=100, output_file="mo
         species_name = species_dir.name
         print(f"\nProcessing: {species_name}")
         
-        # Get image files
         image_files = []
         for ext in ['*.jpg', '*.jpeg', '*.png', '*.bmp']:
             image_files.extend(list(species_dir.glob(ext)))
@@ -128,12 +117,10 @@ def build_species_vectors(dataset_path, samples_per_species=100, output_file="mo
             print(f"  Warning: No images found in {species_name}")
             continue
         
-        # Sample images
         if len(image_files) > samples_per_species:
             import random
             image_files = random.sample(image_files, samples_per_species)
         
-        # Extract features
         feature_list = []
         for img_path in tqdm(image_files, desc=f"  {species_name}", ncols=70):
             features = extractor.extract_features(img_path)
@@ -141,16 +128,14 @@ def build_species_vectors(dataset_path, samples_per_species=100, output_file="mo
                 feature_list.append(features)
         
         if len(feature_list) > 0:
-            # Average features to get species reference vector
             species_vector = np.mean(feature_list, axis=0)
-            # Normalize
             species_vector = species_vector / (np.linalg.norm(species_vector) + 1e-8)
             species_vectors[species_name] = species_vector
             print(f"  ✓ {len(feature_list)} samples processed")
         else:
             print(f"  ✗ No valid features extracted")
     
-    # Save vectors
+    
     output_path = Path(output_file)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     

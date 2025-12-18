@@ -27,7 +27,6 @@ def download_dog_breed_dataset(output_dir="dog_breeds_dataset", max_images_per_b
     print("DOG BREED DATASET İNDİRME VE ORGANİZASYON")
     print("=" * 70)
     
-    # Farklı dataset kaynaklarını dene
     dataset_sources = [
         ("stanford-dogs", "train"),  # Stanford Dogs Dataset
         ("dog-breed-identification", "train"),  # Kaggle'dan
@@ -37,7 +36,6 @@ def download_dog_breed_dataset(output_dir="dog_breeds_dataset", max_images_per_b
     dataset = None
     dataset_name = None
     
-    # Dataset'i yükle
     print("\n1. Dataset yükleniyor (bu biraz zaman alabilir)...")
     for source_name, split_name in dataset_sources:
         try:
@@ -50,11 +48,9 @@ def download_dog_breed_dataset(output_dir="dog_breeds_dataset", max_images_per_b
             print(f"   ✗ {source_name} bulunamadı: {e}")
             continue
     
-    # Eğer hiçbiri çalışmazsa, alternatif yöntem dene
     if dataset is None:
         print("\n   Alternatif yöntem deneniyor...")
         try:
-            # Hugging Face'te yaygın köpek breed dataset'leri
             dataset = load_dataset("imagefolder", data_dir="path/to/dogs")  # Bu örnek, gerçek path gerekli
             print(f"   ✓ Dataset yüklendi: {len(dataset)} görsel")
         except Exception as e2:
@@ -72,23 +68,19 @@ def download_dog_breed_dataset(output_dir="dog_breeds_dataset", max_images_per_b
             print("     └── ...")
             return False
     
-    # Output klasörünü oluştur
     output_path = Path(output_dir)
     output_path.mkdir(exist_ok=True, parents=True)
     
     print(f"\n2. Görseller '{output_dir}' klasörüne kaydediliyor...")
     
-    # Sınıf isimlerini al
     breed_names = []
     if hasattr(dataset.features, "label") and hasattr(dataset.features["label"], "names"):
         breed_names = dataset.features["label"].names
     elif "label" in dataset.features:
-        # Label'ları topla
         unique_labels = set()
         for item in dataset:
             label = item.get("label", item.get("breed", "unknown"))
             if isinstance(label, int):
-                # Label ID'si varsa, isimleri bul
                 if hasattr(dataset.features["label"], "names"):
                     breed_names = dataset.features["label"].names
                     break
@@ -97,7 +89,6 @@ def download_dog_breed_dataset(output_dir="dog_breeds_dataset", max_images_per_b
         if not breed_names:
             breed_names = sorted(list(unique_labels))
     else:
-        # Breed bilgisini item'lardan topla
         for item in dataset:
             breed = item.get("breed", item.get("label", "unknown"))
             if breed not in breed_names:
@@ -113,19 +104,15 @@ def download_dog_breed_dataset(output_dir="dog_breeds_dataset", max_images_per_b
     if len(breed_names) > 15:
         print(f"     ... ve {len(breed_names) - 15} tane daha")
     
-    # Her ırk için klasör oluştur
     for breed_name in breed_names:
-        # Klasör adını temizle (özel karakterleri kaldır)
         clean_name = breed_name.replace("/", "_").replace("\\", "_").strip()
         breed_path = output_path / clean_name
         breed_path.mkdir(exist_ok=True)
     
-    # Görselleri organize et
     breed_counts = {name: 0 for name in breed_names}
     
     print("\n3. Görseller işleniyor...")
     for idx, item in enumerate(tqdm(dataset, desc="   Progress", ncols=70)):
-        # Breed'i al
         breed_name = "unknown"
         if "label" in item:
             label = item["label"]
@@ -136,35 +123,28 @@ def download_dog_breed_dataset(output_dir="dog_breeds_dataset", max_images_per_b
         elif "breed" in item:
             breed_name = str(item["breed"])
         
-        # Klasör adını temizle
         clean_name = breed_name.replace("/", "_").replace("\\", "_").strip()
         
-        # Maksimum sayıya ulaşıldıysa atla
         if breed_counts.get(breed_name, 0) >= max_images_per_breed:
             continue
         
-        # Görseli al
         if "image" not in item:
             continue
         image = item["image"]
         
-        # Görseli kaydet
         image_filename = f"{clean_name}_{breed_counts.get(breed_name, 0):04d}.jpg"
         image_path = output_path / clean_name / image_filename
         
         try:
-            # RGB'ye çevir (eğer grayscale ise)
             if image.mode != 'RGB':
                 image = image.convert('RGB')
             
-            # Kaydet
             image.save(image_path, 'JPEG', quality=95)
             breed_counts[breed_name] = breed_counts.get(breed_name, 0) + 1
         except Exception as e:
             print(f"\n   ⚠ Görsel kaydedilemedi: {image_filename} - {e}")
             continue
     
-    # Sonuçları göster
     print("\n" + "=" * 70)
     print("SONUÇ")
     print("=" * 70)
@@ -225,14 +205,12 @@ if __name__ == "__main__":
     
     print("\n🐕 Dog Breed Dataset İndirme Aracı\n")
     
-    # Dataset'i indir ve organize et
     success = download_dog_breed_dataset(
         output_dir=args.output_dir,
         max_images_per_breed=args.max_per_breed
     )
     
     if success:
-        # Eğitim talimatlarını göster
         train_with_dog_breeds(args.output_dir)
         
         print("\n" + "=" * 70)

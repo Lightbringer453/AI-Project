@@ -12,15 +12,12 @@ def main():
     print("=" * 70)
     print()
     
-    # Source datasets
-    dataset1 = Path("cat_breeds_dataset")  # li-yan dataset
-    dataset2 = Path("oxford_pets_organized")  # Oxford-IIIT dataset
+    dataset1 = Path("cat_breeds_dataset")
+    dataset2 = Path("oxford_pets_organized")
     
-    # Output directory
     output_dir = Path("cat_breeds_merged")
     output_dir.mkdir(exist_ok=True)
     
-    # Check if datasets exist
     if not dataset1.exists():
         print(f"❌ Error: {dataset1} not found!")
         print("   Run: python download_cat_breed_dataset.py")
@@ -36,7 +33,6 @@ def main():
     print(f"   2. {dataset2}")
     print()
     
-    # Breed name mapping (normalize names)
     breed_mapping = {
         'abyssinian': 'abyssinian',
         'american shorthair': 'american shorthair',
@@ -60,7 +56,6 @@ def main():
     breed_counts = {}
     total_images = 0
     
-    # Process dataset 1 (li-yan)
     print("Processing li-yan dataset...")
     for breed_dir in tqdm(list(dataset1.iterdir()), desc="   Dataset 1"):
         if not breed_dir.is_dir():
@@ -74,7 +69,6 @@ def main():
         target_dir = output_dir / normalized_breed
         target_dir.mkdir(exist_ok=True)
         
-        # Copy images
         image_files = list(breed_dir.glob("*.jpg")) + list(breed_dir.glob("*.jpeg")) + list(breed_dir.glob("*.png"))
         for img_file in image_files:
             dest = target_dir / f"li_yan_{img_file.name}"
@@ -85,7 +79,6 @@ def main():
     
     print(f"   ✓ Processed {len(breed_counts)} breeds from li-yan dataset\n")
     
-    # Process dataset 2 (Oxford)
     print("Processing Oxford-IIIT dataset...")
     oxford_count = 0
     for breed_dir in tqdm(list(dataset2.iterdir()), desc="   Dataset 2"):
@@ -100,7 +93,6 @@ def main():
         target_dir = output_dir / normalized_breed
         target_dir.mkdir(exist_ok=True)
         
-        # Copy images
         image_files = list(breed_dir.glob("*.jpg")) + list(breed_dir.glob("*.jpeg")) + list(breed_dir.glob("*.png"))
         for img_file in image_files:
             dest = target_dir / f"oxford_{img_file.name}"
@@ -112,7 +104,6 @@ def main():
     
     print(f"   ✓ Added {oxford_count} images from Oxford dataset\n")
     
-    # Print summary
     print("=" * 70)
     print("MERGED DATASET SUMMARY")
     print("=" * 70)

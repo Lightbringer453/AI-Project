@@ -100,7 +100,6 @@ def crop_image(image: np.ndarray, bbox: Tuple[int, int, int, int]) -> np.ndarray
         Cropped image
     """
     x1, y1, x2, y2 = bbox
-    # Ensure coordinates are within image bounds
     h, w = image.shape[:2]
     x1 = max(0, min(x1, w))
     y1 = max(0, min(y1, h))
@@ -123,7 +122,6 @@ def convert_rgb_to_bgr(image: np.ndarray) -> np.ndarray:
 def image_to_pil(image: np.ndarray) -> Image.Image:
     """Convert numpy array image to PIL Image."""
     if len(image.shape) == 3 and image.shape[2] == 3:
-        # Convert BGR to RGB for PIL
         image = convert_bgr_to_rgb(image)
     return Image.fromarray(image)
 

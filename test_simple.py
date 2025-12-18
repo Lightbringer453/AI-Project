@@ -13,17 +13,14 @@ def test_with_image(image_path):
     print("=" * 60)
     
     try:
-        # Pipeline'ı başlat
         print("\n1. Pipeline başlatılıyor...")
         pipeline = ImageAnalysisPipeline(detector_type="yolo")
         print("   ✓ Pipeline hazır!")
         
-        # Görseli işle
         print(f"\n2. Görsel işleniyor: {image_path}")
         result = pipeline.process_image(image_path, save_output=True)
         print("   ✓ İşlem tamamlandı!")
         
-        # Sonuçları göster
         print("\n" + "=" * 60)
         print("SONUÇLAR")
         print("=" * 60)
@@ -31,7 +28,6 @@ def test_with_image(image_path):
         print(f"İnsan sayısı: {result['summary']['humans']}")
         print(f"Hayvan sayısı: {result['summary']['animals']}")
         
-        # Detaylı sonuçlar
         if result['detections']:
             print("\n" + "-" * 60)
             print("DETAYLI SONUÇLAR")
@@ -76,7 +72,6 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         image_path = sys.argv[1]
     else:
-        # Varsayılan test görseli yolu
         image_path = "test_image.jpg"
         print(f"Görsel yolu belirtilmedi, varsayılan kullanılıyor: {image_path}")
         print("Özel görsel için: python test_simple.py <görsel_yolu>")

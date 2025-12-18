@@ -6,7 +6,6 @@ import os
 from pathlib import Path
 import shutil
 
-# İtalyanca -> İngilizce çeviri
 translation = {
     "cane": "dog",
     "cavallo": "horse",

@@ -61,7 +61,6 @@ class YOLODetector:
         if conf_threshold is None:
             conf_threshold = CONFIDENCE_THRESHOLD
         
-        # Run inference
         results = self.model(image, conf=conf_threshold, verbose=False)
         
         detections = []
@@ -72,15 +71,12 @@ class YOLODetector:
                 continue
             
             for box in boxes:
-                # Get box coordinates
                 x1, y1, x2, y2 = box.xyxy[0].cpu().numpy()
                 x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
                 
-                # Get class and confidence
                 class_id = int(box.cls[0].cpu().numpy())
                 confidence = float(box.conf[0].cpu().numpy())
                 
-                # Filter for humans and animals only
                 if class_id == HUMAN_CLASS_ID:
                     detection = {
                         "bbox": (x1, y1, x2, y2),
@@ -106,13 +102,6 @@ class YOLODetector:
     def detect_and_crop(self, image: np.ndarray, conf_threshold: float = None) -> List[Dict]:
         """
         Detect objects and return cropped regions.
-        
-        Args:
-            image: Input image
-            conf_threshold: Confidence threshold
-            
-        Returns:
-            List of detection dictionaries with additional 'crop' key containing cropped image
         """
         detections = self.detect(image, conf_threshold)
         

@@ -27,18 +27,15 @@ def main():
     print("=" * 70)
     print()
     
-    # URLs
     images_url = "https://www.robots.ox.ac.uk/~vgg/data/pets/data/images.tar.gz"
     annotations_url = "https://www.robots.ox.ac.uk/~vgg/data/pets/data/annotations.tar.gz"
     
-    # Paths
     base_dir = Path("oxford_pets_raw")
     base_dir.mkdir(exist_ok=True)
     
     images_tar = base_dir / "images.tar.gz"
     annotations_tar = base_dir / "annotations.tar.gz"
     
-    # Download images
     if not images_tar.exists():
         print("1. Downloading images (~800MB)...")
         download_file(images_url, str(images_tar))
@@ -46,7 +43,6 @@ def main():
     else:
         print("1. Images already downloaded\n")
     
-    # Download annotations
     if not annotations_tar.exists():
         print("2. Downloading annotations...")
         download_file(annotations_url, str(annotations_tar))
@@ -54,7 +50,6 @@ def main():
     else:
         print("2. Annotations already downloaded\n")
     
-    # Extract
     print("3. Extracting files...")
     
     if not (base_dir / "images").exists():
@@ -73,33 +68,26 @@ def main():
     else:
         print("   Annotations already extracted")
     
-    # Organize by breed
     print("\n4. Organizing images by breed...")
     
     images_dir = base_dir / "images"
     output_dir = Path("oxford_pets_organized")
     output_dir.mkdir(exist_ok=True)
     
-    # Get all image files
     image_files = list(images_dir.glob("*.jpg"))
     
-    # Cat breeds in Oxford dataset (25 cat breeds)
     cat_breeds = {
         'Abyssinian', 'Bengal', 'Birman', 'Bombay', 'British_Shorthair',
         'Egyptian_Mau', 'Maine_Coon', 'Persian', 'Ragdoll', 'Russian_Blue',
         'Siamese', 'Sphynx'
     }
     
-    # Organize files
     breed_counts = {}
     
     for img_file in tqdm(image_files, desc="   Processing images"):
-        # Extract breed name from filename
-        # Format: BreedName_123.jpg
         filename = img_file.stem
         parts = filename.split('_')
         
-        # Find breed name (everything before the last number)
         breed_parts = []
         for part in parts:
             if part.isdigit():
@@ -111,23 +99,18 @@ def main():
             
         breed_name = '_'.join(breed_parts)
         
-        # Only process cat breeds
         if breed_name not in cat_breeds:
             continue
         
-        # Create breed directory
         breed_dir = output_dir / breed_name.lower().replace('_', ' ')
         breed_dir.mkdir(exist_ok=True)
         
-        # Copy image
         dest = breed_dir / img_file.name
         if not dest.exists():
             shutil.copy2(img_file, dest)
         
-        # Count
         breed_counts[breed_name] = breed_counts.get(breed_name, 0) + 1
     
-    # Print summary
     print("\n" + "=" * 70)
     print("RESULTS")
     print("=" * 70)

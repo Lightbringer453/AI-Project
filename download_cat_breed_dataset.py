@@ -27,7 +27,6 @@ def download_cat_breed_dataset(output_dir="cat_breeds_dataset", max_images_per_b
     print("CAT BREED DATASET İNDİRME VE ORGANİZASYON")
     print("=" * 70)
     
-    # Dataset'i yükle
     print("\n1. Dataset yükleniyor (bu biraz zaman alabilir)...")
     try:
         dataset = load_dataset("li-yan/cat-by-breed-v1", split="train")
@@ -43,17 +42,14 @@ def download_cat_breed_dataset(output_dir="cat_breeds_dataset", max_images_per_b
             print(f"   ✗ Hata: {e2}")
             return False
     
-    # Output klasörünü oluştur
     output_path = Path(output_dir)
     output_path.mkdir(exist_ok=True, parents=True)
     
     print(f"\n2. Görseller '{output_dir}' klasörüne kaydediliyor...")
     
-    # Sınıf isimlerini al
     if hasattr(dataset.features["label"], "names"):
         breed_names = dataset.features["label"].names
     else:
-        # Manuel olarak breed isimlerini topla
         breed_names = []
         for item in dataset:
             breed = item.get("breed", "unknown")
@@ -66,17 +62,14 @@ def download_cat_breed_dataset(output_dir="cat_breeds_dataset", max_images_per_b
     if len(breed_names) > 10:
         print(f"     ... ve {len(breed_names) - 10} tane daha")
     
-    # Her ırk için klasör oluştur
     for breed_name in breed_names:
         breed_path = output_path / breed_name
         breed_path.mkdir(exist_ok=True)
     
-    # Görselleri organize et
     breed_counts = {name: 0 for name in breed_names}
     
     print("\n3. Görseller işleniyor...")
     for idx, item in enumerate(tqdm(dataset, desc="   Progress", ncols=70)):
-        # Breed'i al
         if "label" in item:
             label = item["label"]
             breed_name = breed_names[label] if isinstance(label, int) else label
@@ -85,30 +78,24 @@ def download_cat_breed_dataset(output_dir="cat_breeds_dataset", max_images_per_b
         else:
             breed_name = "unknown"
         
-        # Maksimum sayıya ulaşıldıysa atla
         if breed_counts.get(breed_name, 0) >= max_images_per_breed:
             continue
         
-        # Görseli al
         image = item["image"]
         
-        # Görseli kaydet
         image_filename = f"{breed_name}_{breed_counts.get(breed_name, 0):04d}.jpg"
         image_path = output_path / breed_name / image_filename
         
         try:
-            # RGB'ye çevir (eğer grayscale ise)
             if image.mode != 'RGB':
                 image = image.convert('RGB')
             
-            # Kaydet
             image.save(image_path, 'JPEG', quality=95)
             breed_counts[breed_name] = breed_counts.get(breed_name, 0) + 1
         except Exception as e:
             print(f"\n   ⚠ Görsel kaydedilemedi: {image_filename} - {e}")
             continue
     
-    # Sonuçları göster
     print("\n" + "=" * 70)
     print("SONUÇ")
     print("=" * 70)
@@ -169,14 +156,12 @@ if __name__ == "__main__":
     
     print("\n🐱 Cat Breed Dataset İndirme Aracı\n")
     
-    # Dataset'i indir ve organize et
     success = download_cat_breed_dataset(
         output_dir=args.output_dir,
         max_images_per_breed=args.max_per_breed
     )
     
     if success:
-        # Eğitim talimatlarını göster
         train_with_cat_breeds(args.output_dir)
         
         print("\n" + "=" * 70)

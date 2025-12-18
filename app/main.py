@@ -37,17 +37,17 @@ class ImageAnalysisPipeline:
         self.detector_type = detector_type.lower()
         self.device = device
         
-        # Initialize detector
+        
         if self.detector_type == "yolo":
             self.detector = YOLODetector(model_path=yolo_model_path, device=device)
         else:
             raise ValueError(f"Unknown detector type: {detector_type}")
         
-        # Initialize analyzers
+        
         self.human_analyzer = HumanAnalyzer()
         self.animal_analyzer = AnimalAnalyzer()
         
-        # Create output directory
+        
         Path(OUTPUT_DIR).mkdir(exist_ok=True)
         
         print(f"Pipeline initialized with {detector_type} detector")
@@ -73,7 +73,7 @@ class ImageAnalysisPipeline:
             - annotated_image: Annotated image (if draw_annotations=True)
             - summary: Summary statistics
         """
-        # Load image
+        
         if isinstance(image_path, (str, Path)):
             image = load_image(image_path)
         elif isinstance(image_path, np.ndarray):
@@ -81,13 +81,13 @@ class ImageAnalysisPipeline:
         else:
             raise ValueError("Invalid image input type")
         
-        # Resize if too large
+        
         image = resize_image_max_dim(image, MAX_IMAGE_SIZE)
         
-        # Step 1: Detect objects
+        
         detections = self.detector.detect(image, conf_threshold=conf_threshold)
         
-        # Step 2: Analyze each detection
+        
         results = []
         for detection in detections:
             bbox = detection["bbox"]
@@ -95,11 +95,11 @@ class ImageAnalysisPipeline:
             class_type = detection["class_type"]
             
             if class_type == "human":
-                # Analyze human
+                
                 attributes = self.human_analyzer.analyze_human(crop)
                 detection["attributes"] = attributes
             elif class_type == "animal":
-                # Analyze animal
+                
                 species = detection.get("class_name", "unknown")
                 detection_confidence = detection.get("confidence", None)
                 attributes = self.animal_analyzer.analyze_animal(
@@ -111,12 +111,12 @@ class ImageAnalysisPipeline:
             
             results.append(detection)
         
-        # Step 3: Draw annotations
+        
         annotated_image = None
         if draw_annotations:
             annotated_image = draw_all_detections(image, results, draw_attributes=True)
         
-        # Step 4: Save output if requested
+        
         if save_output is None:
             save_output = SAVE_ANNOTATED_IMAGES
         
@@ -126,7 +126,7 @@ class ImageAnalysisPipeline:
             cv2.imwrite(str(output_path), annotated_image)
             print(f"Saved annotated image to {output_path}")
         
-        # Create summary
+        
         summary = {
             "total_detections": len(results),
             "humans": sum(1 for r in results if r["class_type"] == "human"),
@@ -155,7 +155,7 @@ class ImageAnalysisPipeline:
         """
         result = self.process_image(image_path, save_output=False, draw_annotations=False)
         
-        # Convert to JSON-serializable format
+        
         json_data = {
             "summary": result["summary"],
             "detections": []
@@ -185,14 +185,13 @@ def main():
     
     image_path = sys.argv[1]
     
-    # Initialize pipeline
+
     pipeline = ImageAnalysisPipeline(detector_type="yolo")
     
-    # Process image
+    
     print(f"Processing image: {image_path}")
     result = pipeline.process_image(image_path)
     
-    # Print summary
     print("\n" + "="*50)
     print("ANALYSIS SUMMARY")
     print("="*50)
@@ -200,7 +199,6 @@ def main():
     print(f"Humans: {result['summary']['humans']}")
     print(f"Animals: {result['summary']['animals']}")
     
-    # Print detailed results
     print("\n" + "="*50)
     print("DETAILED RESULTS")
     print("="*50)
@@ -221,7 +219,6 @@ def main():
             print(f"  Breed: {attributes.get('breed', 'N/A')}")
             print(f"  Maturity: {attributes.get('maturity', 'N/A')}")
     
-    # Save JSON output
     json_output = pipeline.process_image_to_json(image_path)
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     json_path = Path(OUTPUT_DIR) / f"result_{timestamp}.json"

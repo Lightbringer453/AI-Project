@@ -8,7 +8,6 @@ from pathlib import Path
 def download_test_image():
     """Örnek test görseli indir"""
     
-    # Ücretsiz test görseli URL'leri (Unsplash)
     test_images = {
         "1": {
             "url": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800",

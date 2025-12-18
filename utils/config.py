@@ -2,18 +2,15 @@
 Configuration file for the Multi-Purpose Image Detection and Analysis System
 """
 
-# Model paths and settings
-YOLO_MODEL_PATH = "yolov8n.pt"  # Will download automatically if not present
 
-# Detection settings
+YOLO_MODEL_PATH = "yolov8n.pt"  
+
 CONFIDENCE_THRESHOLD = 0.5
 IOU_THRESHOLD = 0.45
 
-# Class IDs (COCO dataset)
-HUMAN_CLASS_ID = 0  # person
-ANIMAL_CLASS_IDS = [14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24]  # Various animals in COCO
+HUMAN_CLASS_ID = 0  
+ANIMAL_CLASS_IDS = [14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24]  
 
-# Animal class mapping (COCO dataset)
 ANIMAL_CLASS_NAMES = {
     14: "bird",
     15: "cat",
@@ -28,15 +25,12 @@ ANIMAL_CLASS_NAMES = {
     24: "other"
 }
 
-# DeepFace settings
-DEEPFACE_MODEL = "VGG-Face"  # Options: VGG-Face, Facenet, ArcFace, OpenFace, DeepFace, DeepID, Dlib
-DEEPFACE_BACKEND = "opencv"  # Options: opencv, ssd, dlib, mtcnn, retinaface
+DEEPFACE_MODEL = "VGG-Face"  
+DEEPFACE_BACKEND = "opencv"  
 
-# Image processing settings
-IMAGE_SIZE = (640, 640)  # Standard YOLO input size
-MAX_IMAGE_SIZE = 1920  # Maximum dimension for processing
+IMAGE_SIZE = (640, 640)  
+MAX_IMAGE_SIZE = 1920  
 
-# Output settings
 OUTPUT_DIR = "outputs"
 SAVE_ANNOTATED_IMAGES = True
 
